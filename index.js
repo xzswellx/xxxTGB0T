@@ -1,6 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 const axios = require("axios");
 const express = require("express");
+const fs = require('fs');
 const app = express();
 
 app.get("/", (req, res) => {
@@ -11,8 +12,9 @@ const port = 3000;
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
+
 // Ваш токен бота
-const token = '6404541889:AAGsyDJs7tIrgKjZ3T1EkFgw3BtCy8NVnTU';
+const token = '7015073848:AAE19d8SqNL9TKVPdYnGQCl5AyzAKkebGRw';
 
 // Создание экземпляра бота
 const bot = new TelegramBot(token, { polling: true });
@@ -47,32 +49,12 @@ const cart = new Map();
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     const welcomeMessage = `® ДОБРО ПОЖАЛОВАТЬ В Swag Shop\n\n👉 Преимущества нашего сервиса:\n\n💲Бот автопродаж и оператор работают 24/7.\n❗  Выгодные цены и высочайшее качество товара.\n\n❗️В бота были добавлены только РФ города.\nгорода/села/пгт уточняйте у админа❗️ @swag_admin`;
-    bot.sendMessage(chatId, welcomeMessage);
+    bot.sendMessage(chatId, welcomeMessage).then(() => {
+        sendMainMenu(chatId);
+    });
 });
 
 // Обработчик текстовых сообщений
-bot.on('message', (msg) => {
-    const chatId = msg.chat.id;
-    bot.sendMessage(chatId, 'ㅤ');
-});
-
-// Функция для отправки главного меню
-function sendMainMenu(chatId) {
-    bot.sendMessage(chatId, 'Выберите действие:', {
-        reply_markup: {
-            keyboard: [
-                ['Каталог товаров 📦'],
-                ['Корзина 🛒', 'Поддержка 🛠️'],
-                ['🏙Доступные Города'],
-                ['Отзывы 🌟'],
-                ['Оплатить товар 💳']
-            ],
-            resize_keyboard: true
-        }
-    });
-}
-
-// Обработчик кнопок главного меню
 bot.on('message', (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text;
@@ -97,9 +79,26 @@ bot.on('message', (msg) => {
             sendPaymentOptions(chatId);
             break;
         default:
+            bot.sendMessage(chatId, 'Пожалуйста, выберите одну из доступных опций.');
             break;
     }
 });
+
+// Функция для отправки главного меню
+function sendMainMenu(chatId) {
+    bot.sendMessage(chatId, 'Выберите действие:', {
+        reply_markup: {
+            keyboard: [
+                ['Каталог товаров 📦'],
+                ['Корзина 🛒', 'Поддержка 🛠️'],
+                ['🏙Доступные Города'],
+                ['Отзывы 🌟'],
+                ['Оплатить товар 💳']
+            ],
+            resize_keyboard: true
+        }
+    });
+}
 
 // Функция для отправки списка доступных городов
 function sendAvailableCities(chatId) {
@@ -144,7 +143,7 @@ bot.on('callback_query', (callbackQuery) => {
     if (addToCart(chatId, productId)) {
         bot.answerCallbackQuery(callbackQuery.id, { text: `${products.find(p => p.id === productId).name} добавлен в корзину! 🛒` });
     } else {
-        bot.answerCallbackQuery(callbackQuery.id, { text: 'Извините, такого товара нет.' });
+        bot.answerCallbackQuery(callbackQuery.id, { text: '✅' });
     }
 });
 
